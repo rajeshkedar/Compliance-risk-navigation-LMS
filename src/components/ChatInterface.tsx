@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, ArrowLeft } from 'lucide-react';
+import { Send, ArrowLeft, LayoutDashboard, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { RoleInfo, Message } from '@/types/roles';
+import { getMockOCLData } from '@/types/compliance';
 import { ChatMessage } from './ChatMessage';
 import { QuickPrompts } from './QuickPrompts';
+import { ComplianceDashboard } from './ComplianceDashboard';
 
 interface ChatInterfaceProps {
   role: RoleInfo;
@@ -101,8 +103,13 @@ export const ChatInterface = ({ role, onBack }: ChatInterfaceProps) => {
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [showDashboard, setShowDashboard] = useState(true);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Get role-specific OCL data
+  const oclData = getMockOCLData(role.id);
+  const riskScore = 68; // Simulated risk score
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -153,26 +160,60 @@ export const ChatInterface = ({ role, onBack }: ChatInterfaceProps) => {
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={onBack}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
-              <span className="text-lg">🧠</span>
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={onBack}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                <span className="text-lg">🧠</span>
+              </div>
+              <div>
+                <h1 className="font-semibold text-foreground">Compliance Co-Pilot</h1>
+                <p className="text-xs text-muted-foreground">{role.title}</p>
+              </div>
             </div>
-            <div>
-              <h1 className="font-semibold text-foreground">Compliance Co-Pilot</h1>
-              <p className="text-xs text-muted-foreground">{role.title}</p>
-            </div>
+          </div>
+
+          {/* Dashboard Toggle */}
+          <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-1">
+            <Button
+              variant={showDashboard ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setShowDashboard(true)}
+              className="gap-1.5"
+            >
+              <LayoutDashboard className="w-4 h-4" />
+              <span className="hidden sm:inline">Dashboard</span>
+            </Button>
+            <Button
+              variant={!showDashboard ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setShowDashboard(false)}
+              className="gap-1.5"
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span className="hidden sm:inline">Chat</span>
+            </Button>
           </div>
         </div>
       </header>
 
-      {/* Chat Area */}
+      {/* Main Content Area */}
       <main className="flex-1 overflow-y-auto">
         <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+          {/* Compliance Dashboard */}
+          {showDashboard && (
+            <ComplianceDashboard 
+              role={role} 
+              oclData={oclData} 
+              riskScore={riskScore} 
+            />
+          )}
+
+          {/* Chat Messages */}
           <AnimatePresence>
             {messages.map((message, index) => (
               <ChatMessage
@@ -202,7 +243,7 @@ export const ChatInterface = ({ role, onBack }: ChatInterfaceProps) => {
             </motion.div>
           )}
 
-          {showQuickPrompts && (
+          {showQuickPrompts && !showDashboard && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

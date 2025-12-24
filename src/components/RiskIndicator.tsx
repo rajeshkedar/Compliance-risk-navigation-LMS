@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
-import { getRiskLevel } from '@/types/roles';
 import { cn } from '@/lib/utils';
+import { getRiskLevel } from '@/types/roles';
 
 interface RiskIndicatorProps {
   score: number;
